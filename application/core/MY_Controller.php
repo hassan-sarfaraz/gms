@@ -141,11 +141,11 @@ class MY_Controller extends CI_Controller{
         $currency_symbol = '<img src="'.base_url().'uploads/logo.png" style="height:1em; width:auto; display:inline-block; vertical-align:middle;" alt="logo" />';
 
         if($this->session->userdata('currency_placement')=='Left'){
-          if(!empty($value)){
-            return $currency_symbol." ".$value;
-          }
-          return $currency_symbol."".$value;
-          
+          // if(!empty($value)){
+          //   return $currency_symbol." ".$value;
+          // }
+          // return $currency_symbol."".$value;
+          return $value;
         }
         else{
           if(!empty($value)){

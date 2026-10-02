@@ -533,7 +533,9 @@ function get_salesmans_select_list($select_id='',$store_id=''){
           { 
             $tot_advance = store_number_format($res1->tot_advance,0);
             $selected = ($select_id==$res1->id)? 'selected' : '';
-            $str.="<option $selected data-tot_advance='".$tot_advance."' value='".$res1->id."'>".$res1->salesman_code."-".$res1->salesman_name."</option>";
+            $salesman_name = ltrim(trim($res1->salesman_name), '- ');
+            $str.="<option $selected data-tot_advance='".$tot_advance."' value='".$res1->id."'>".$salesman_name."</option>";
+
           }
         }
         else

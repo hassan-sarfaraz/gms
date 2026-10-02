@@ -191,14 +191,14 @@
 
                         <!-- Warehouse Code end -->
                         <div class="form-group">
-                           <label for="warehouse_id" class="col-sm-2 control-label">Branch<label class="text-danger">*</label></label>
+                           <label for="warehouse_id" class="col-sm-2 control-label">Branch Name<label class="text-danger">*</label></label>
                            <div class="col-sm-3">
                               <select class="form-control select2 " id="warehouse_id" name="warehouse_id">
                                  <?= get_warehouse_select_list($warehouse_id, get_current_store_id()); ?>
                               </select>
                               <span id="warehouse_id_msg" style="display:none" class="text-danger"></span>
                            </div>
-                           <label for="init_code" class="col-sm-2 control-label"><?= $this->lang->line('sales_code'); ?><label class="text-danger">*</label></label>
+                           <label for="init_code" class="col-sm-2 control-label"><?= $this->lang->line('invoice_no'); ?><label class="text-danger">*</label></label>
                            <div class="col-sm-2" style="padding-right:0;">
                               <input type="text" value="<?= $init_code; ?>" class="form-control  no-padding" style='font-size:20px;' id="init_code" name="init_code" placeholder="">
                               <span id="init_code_msg" style="display:none" class="text-danger"></span>
@@ -234,7 +234,7 @@
                               <span id="customer_id_msg" style="display:none" class="text-danger"></span>
                               <lable><?= $this->lang->line('previous_due'); ?> :<label class="customer_previous_due text-red" style="font-size: 18px;">0.00</label></lable>
                            </div>
-                           <label for="sales_date" class="col-sm-2 control-label"><?= $this->lang->line('sales_date'); ?> <label class="text-danger">*</label></label>
+                           <label for="sales_date" class="col-sm-2 control-label"><?= $this->lang->line('invoice_date'); ?> <label class="text-danger">*</label></label>
                            <div class="col-sm-3">
                               <div class="input-group date">
                                  <div class="input-group-addon">
@@ -246,7 +246,7 @@
                            </div>
                         </div>
                         <div class="form-group">
-                           <label for="reference_no" class="col-sm-2 control-label"><?= $this->lang->line('reference_no'); ?> </label>
+                           <label for="reference_no" class="col-sm-2 control-label"><?= $this->lang->line('reference'); ?> </label>
                            <div class="col-sm-3">
                               <input type="text" value="<?php echo  $reference_no; ?>" class="form-control " id="reference_no" name="reference_no" placeholder="">
                               <span id="reference_no_msg" style="display:none" class="text-danger"></span>
@@ -305,10 +305,12 @@
 
                                                    <th rowspan='2' style="width:10%;min-width: 180px;"><?= $this->lang->line('quantity'); ?></th>
                                                    <th rowspan='2' style="width:10%"><?= $this->lang->line('unit_price'); ?></th>
-                                                   <th rowspan='2' style="width:10%"><?= $this->lang->line('discount'); ?>(<?= $CI->currency() ?>)</th>
-                                                   <th rowspan='2' style="width:10%"><?= $this->lang->line('tax_amount'); ?></th>
-                                                   <th rowspan='2' style="width:5%"><?= $this->lang->line('tax'); ?></th>
-                                                   <th rowspan='2' style="width:7.5%"><?= $this->lang->line('total_amount'); ?></th>
+                                                   <!-- <th rowspan='2' style="width:10%"><?= $this->lang->line('discount'); ?>(<?= $CI->currency() ?>)</th> -->
+                                                   <th rowspan='2' style="width:10%"><?= $this->lang->line('discount'); ?></th>
+
+                                                   <th rowspan='2' style="width:10%"><?= $this->lang->line('vat_amount'); ?></th>
+                                                   <th rowspan='2' style="width:5%"><?= $this->lang->line('vat_percentage'); ?></th>
+                                                   <th rowspan='2' style="width:7.5%">Amount</th>
                                                    <th rowspan='2' style="width:7.5%"><?= $this->lang->line('action'); ?></th>
                                                 </tr>
                                              </thead>
@@ -339,7 +341,7 @@
 
 
 
-                           <div class="row">
+                           <div class="row" style="display:none;">
                               <div class="col-md-12">
                                  <div class="form-group">
                                     <label for="other_charges_input" class="col-sm-4 control-label"><?= $this->lang->line('other_charges'); ?></label>
@@ -354,7 +356,7 @@
                                  </div>
                               </div>
                            </div>
-                           <div class="row">
+                           <div class="row" style="display:none;">
                               <div class="col-md-12">
                                  <div class="form-group">
                                     <label for="other_charges_input" class="col-sm-4 control-label"><?= $this->lang->line('discountCouponCode'); ?></label>
@@ -403,10 +405,10 @@
                                  </div>
                               </div>
                            </div>
-                           <div class="row">
+                           <div class="row" style="display:none;">
                               <div class="col-md-12">
                                  <div class="form-group">
-                                    <label for="sales_note" class="col-sm-4 control-label"><?= $this->lang->line('note'); ?></label>
+                                    <label for="sales_note" class="col-sm-4 control-label">Comments</label>
                                     <div class="col-sm-8">
                                        <textarea class="form-control text-left" id='sales_note' name="sales_note"><?= $sales_note; ?></textarea>
                                        <span id="sales_note_msg" style="display:none" class="text-danger"></span>
@@ -431,20 +433,20 @@
                                              <h4><b id="subtotal_amt" name="subtotal_amt">0.00</b></h4>
                                           </th>
                                        </tr>
-                                       <tr>
+                                       <tr style="display:none;">
                                           <th class="text-right" style="font-size: 17px;"><?= $this->lang->line('other_charges'); ?></th>
                                           <th class="text-right" style="padding-left:10%;font-size: 17px;">
                                              <h4><b id="other_charges_amt" name="other_charges_amt">0.00</b></h4>
                                           </th>
                                        </tr>
-                                       <tr>
+                                       <tr style="display:none;">
                                           <th class="text-right" style="font-size: 17px;"><?= $this->lang->line('couponDiscount'); ?></th>
                                           <th class="text-right" style="padding-left:10%;font-size: 17px;">
                                              <h4><b id="coupon_discount_amt" name="coupon_discount_amt">0.00</b></h4>
                                           </th>
                                        </tr>
                                        <tr>
-                                          <th class="text-right" style="font-size: 17px;"><?= $this->lang->line('discount_on_all'); ?></th>
+                                          <th class="text-right" style="font-size: 17px;">Discount</th>
                                           <th class="text-right" style="padding-left:10%;font-size: 17px;">
                                              <h4><b id="discount_to_all_amt" name="discount_to_all_amt">0.00</b></h4>
                                           </th>
@@ -461,7 +463,7 @@
                                        <!--   </th>-->
                                        <!--</tr>-->
                                        <tr>
-                                          <th class="text-right" style="font-size: 17px;"><?= $this->lang->line('grand_total'); ?></th>
+                                          <th class="text-right" style="font-size: 17px;">Net Amount</th>
                                           <th class="text-right" style="padding-left:10%;font-size: 17px;">
                                              <h4><b id="total_amt" name="total_amt">0.00</b></h4>
                                           </th>
@@ -472,7 +474,7 @@
                            </div>
                         </div>
 
-                        <div class="col-xs-12 ">
+                        <div class="col-xs-12 " style="display:none;">
                            <div class="col-sm-12">
                               <div class="box-body ">
                                  <div class="col-md-12">
@@ -594,7 +596,7 @@
 
                                              <div class="col-md-4">
                                                 <div class="">
-                                                   <label for="amount"><?= $this->lang->line('amount'); ?></label>
+                                                   <label for="amount">Paid Amount</label>
                                                    <input type="text" class="form-control text-right paid_amt only_currency" id="amount" name="amount" placeholder="">
                                                    <span id="amount_msg" style="display:none" class="text-danger"></span>
                                                 </div>
@@ -604,10 +606,10 @@
                                                    <label for="payment_type"><?= $this->lang->line('payment_type'); ?></label>
                                                    <select class="form-control select2" id='payment_type' name="payment_type">
                                                       <?php
-                                                      $default_payment_type = '';
+                                                      $default_payment_type = 'CASH';
                                                       if (isset($sales_id)) {
                                                           $q_pay = $this->db->query("select payment_type from db_salespayments where sales_id=$sales_id order by id asc limit 1");
-                                                          if ($q_pay->num_rows() > 0) {
+                                                          if ($q_pay->num_rows() > 0 && !empty($q_pay->row()->payment_type)) {
                                                               $default_payment_type = $q_pay->row()->payment_type;
                                                           }
                                                       }
@@ -615,7 +617,7 @@
                                                       if ($q1->num_rows() > 0) {
                                                          echo "<option value=''>-Select-</option>";
                                                          foreach ($q1->result() as $res1) {
-                                                            $selected = ($res1->payment_type == $default_payment_type) ? 'selected' : '';
+                                                            $selected = (strcasecmp($res1->payment_type, $default_payment_type) == 0) ? 'selected' : '';
                                                             echo "<option value='" . $res1->payment_type . "' $selected>" . $res1->payment_type . "</option>";
                                                          }
                                                       } else {
@@ -630,8 +632,21 @@
                                                 <label for="account_id"><?= $this->lang->line('account'); ?></label>
                                                 <select class="form-control select2" id='account_id' name="account_id">
                                                    <?php
+                                                   $default_account_id = '';
+                                                   if (isset($sales_id)) {
+                                                       $q_pay_acc = $this->db->query("select account_id from db_salespayments where sales_id=$sales_id order by id asc limit 1");
+                                                       if ($q_pay_acc->num_rows() > 0 && !empty($q_pay_acc->row()->account_id)) {
+                                                           $default_account_id = $q_pay_acc->row()->account_id;
+                                                       }
+                                                   }
+                                                   if (empty($default_account_id)) {
+                                                       $q_acc = $this->db->query("select id from ac_accounts where status=1 and store_id=" . get_current_store_id() . " and account_name LIKE '%Cash in Hand%' limit 1");
+                                                       if ($q_acc->num_rows() > 0) {
+                                                           $default_account_id = $q_acc->row()->id;
+                                                       }
+                                                   }
                                                    echo '<option value="">-None-</option>';
-                                                   echo get_accounts_select_list();
+                                                   echo get_accounts_select_list($default_account_id);
                                                    ?>
                                                 </select>
                                                 <span id="account_id_msg" style="display:none" class="text-danger"></span>
@@ -663,7 +678,7 @@
                                           <div class="row">
                                              <div class="col-md-12">
                                                 <div class="">
-                                                   <label for="payment_note"><?= $this->lang->line('payment_note'); ?></label>
+                                                   <label for="payment_note"><?= $this->lang->line('note'); ?></label>
                                                    <textarea type="text" class="form-control" id="payment_note" name="payment_note" placeholder=""></textarea>
                                                    <span id="payment_note_msg" style="display:none" class="text-danger"></span>
                                                 </div>
@@ -694,7 +709,7 @@
 
                         ?>
 
-                        <div class="col-xs-12 ">
+                        <div class="col-xs-12 " style="display:none;">
                            <div class="col-sm-12">
                               <div class="box-body ">
                                  <div class="col-md-12">
@@ -733,14 +748,15 @@
                            }
 
                            ?>
-                           <div class="col-md-2 col-md-offset-2">
-                              <button type="button" id="<?php echo $btn_id; ?>" class="btn btn-block btn-success payments_modal" title="Save Data"><?php echo $btn_name; ?></button>
+                           <div class="col-md-2 col-md-offset-3 col-xs-4">
+                              <button type="button" id="<?php echo $btn_id; ?>" class="btn btn-block btn-success payments_modal" title="Save Data" style="font-size: 16px; font-weight: bold; height: 44px;"><?php echo $btn_name; ?></button>
                            </div>
-                           <div class="col-md-2">
-                              <button type="button" id="<?php echo $btn_print_id; ?>" class="btn  btn-info payments_modal" title="Save And Print Data"><?php echo $btn_print_name; ?></button>
+                           <div class="col-md-2 col-xs-4">
+                              <button type="button" id="<?php echo $btn_print_id; ?>" class="btn btn-block btn-info payments_modal" title="Save And Print Data" style="font-size: 16px; font-weight: bold; height: 44px;"><?php echo $btn_print_name; ?></button>
                            </div>
-                           <div class="col-sm-2"><a href="<?= base_url() ?>dashboard">
-                                 <button type="button" class="btn btn-block btn-warning" title="Go Dashboard">Close</button>
+                           <div class="col-md-2 col-xs-4">
+                              <a href="<?= base_url() ?>dashboard">
+                                 <button type="button" class="btn btn-block btn-warning" title="Go Dashboard" style="font-size: 16px; font-weight: bold; height: 44px;">Close</button>
                               </a>
                            </div>
                         </center>

@@ -153,7 +153,7 @@
             <span class="info-box-icon bg-5" ><i class="fa fa-dollar"></i></span>
 
             <div class="info-box-content">
-              <span class="info-box-text" ><?=$CI->currency(kmb($sal_total));?></span>
+              <span class="info-box-text" ><?=kmb($sal_total);?></span>
               <span class="info-box-number"><?=$this->lang->line('total_invoices_amount');?></span>
             </div>
             <!-- /.info-box-content -->
@@ -170,7 +170,7 @@
             <span class="info-box-icon bg-5" ><i class="fa fa-money"></i></span>
 
             <div class="info-box-content">
-              <span class="info-box-text" ><?=$CI->currency(kmb($paid_amount));?></span>
+              <span class="info-box-text" ><?=kmb($paid_amount);?></span>
               <span class="info-box-number"><?=$this->lang->line('total_returned_amount');?></span>
             </div>
             <!-- /.info-box-content -->
@@ -183,7 +183,7 @@
             <span class="info-box-icon bg-5" ><i class="fa fa-minus-circle"></i></span>
 
             <div class="info-box-content">
-              <span class="info-box-text" ><?=$CI->currency(kmb($sales_due_total));?></span>
+              <span class="info-box-text" ><?=kmb($sales_due_total);?></span>
               <span class="info-box-number"><?=$this->lang->line('total_sales_return_due');?></span>
             </div>
             <!-- /.info-box-content -->
@@ -202,7 +202,7 @@
             <div class="box-header with-border">
               <!-- <h3 class="box-title"><?=$page_title;?></h3> -->
               <?php if($CI->permissions('sales_return_add')) { ?>
-              <div class="row"><div class="col-md-2 pull-right"><a class="btn btn-block btn-info" href="<?php echo $base_url; ?>sales_return/create"><i class="fa fa-plus"></i> <?= $this->lang->line('create_new'); ?></a></div></div>
+              <div class="row"><div class="col-md-2 pull-right"><a class="btn btn-block btn-info" href="<?php echo $base_url; ?>sales_return/create" style="font-size: 15px; font-weight: bold;"><i class="fa fa-plus"></i> <?= $this->lang->line('create_new'); ?></a></div></div>
               <?php } ?>
               <div class="row"><div class="col-md-12">
                 <!-- Warehouse Code -->
@@ -212,18 +212,18 @@
                  }
                 ?>
                 <!-- Warehouse Code end -->
-                <div class="col-md-4"><div class="form-group"><label>Customers</label><select class="form-control select2" id="search_customer_id" style="width:100%;"><option value="">-All Customers-</option><?=get_customers_select_list(null,get_current_store_id());?></select></div></div>
-                <div class="col-md-4"><div class="form-group"><label>Users</label><select class="form-control select2" id="users" style="width:100%;"><?=get_users_select_list($this->session->userdata('role_id'),get_current_store_id());?></select></div></div>
-
                 <?php $return_departments=$this->db->select('*')->from('db_department')->get()->result(); ?>
-                <div class="col-md-3"><div class="form-group"><label>Department</label><select class="form-control select2" id="filter_dptid" style="width:100%;"><option value="">-All Departments-</option><?php foreach($return_departments as $department){ ?><option value="<?=$department->dptid;?>"><?=$department->dptName;?></option><?php } ?></select></div></div>
-                <div class="col-md-3"><div class="form-group"><label>Category</label><select class="form-control select2" id="filter_category_id" style="width:100%;"><option value="">-All Categories-</option></select></div></div>
-                <div class="col-md-3"><div class="form-group"><label>Sub Category</label><select class="form-control select2" id="filter_scatid" style="width:100%;"><option value="">-All Sub Categories-</option></select></div></div>
-                <div class="col-md-3"><div class="form-group"><label>Salesman</label><select class="form-control select2" id="filter_salesman_id" style="width:100%;"><option value="">-All Salesmen-</option><?=get_salesmans_select_list(null,get_current_store_id());?></select></div></div>
+                <div class="col-md-4"><div class="form-group"><label for="filter_dptid">Department</label><select class="form-control select2" id="filter_dptid" style="width:100%;"><option value="">All Departments</option><?php foreach($return_departments as $department){ ?><option value="<?=$department->dptid;?>"><?=$department->dptName;?></option><?php } ?></select></div></div>
+                <div class="col-md-4"><div class="form-group"><label for="filter_category_id">Category</label><select class="form-control select2" id="filter_category_id" style="width:100%;"><option value="">All Categories</option></select></div></div>
+                <div class="col-md-4"><div class="form-group"><label for="filter_scatid">Sub Category</label><select class="form-control select2" id="filter_scatid" style="width:100%;"><option value="">All Sub Categories</option></select></div></div>
 
-                <div class="col-md-4"><div class="form-group"><label>From Date</label><div class="input-group date"><div class="input-group-addon"><i class="fa fa-calendar"></i></div><input type="text" class="form-control datepicker" id="return_from_date"></div></div></div>
-                <div class="col-md-4"><div class="form-group"><label>To Date</label><div class="input-group date"><div class="input-group-addon"><i class="fa fa-calendar"></i></div><input type="text" class="form-control datepicker" id="return_to_date"></div></div></div>
-                <div class="col-md-4"><div class="form-group"><label>Type</label><select class="form-control" id="sales_type"><option value="all">All</option><option value="retail">Retail</option><option value="wholesale">Wholesale</option></select></div></div>
+                <div class="col-md-4"><div class="form-group"><label for="search_customer_id">Customer</label><select class="form-control select2" id="search_customer_id" style="width:100%;"><option value="">All Customers</option><?=get_customers_select_list(null,get_current_store_id());?></select></div></div>
+                <div class="col-md-4"><div class="form-group"><label for="users">Users</label><select class="form-control select2" id="users" style="width:100%;"><?=get_users_select_list($this->session->userdata('role_id'),get_current_store_id());?></select></div></div>
+                <div class="col-md-4"><div class="form-group"><label for="filter_salesman_id">Salesman</label><select class="form-control select2" id="filter_salesman_id" style="width:100%;"><option value="">All Salesmen</option><?=get_salesmans_select_list(null,get_current_store_id());?></select></div></div>
+
+                <div class="col-md-4"><div class="form-group"><label for="return_from_date">From Date</label><div class="input-group date"><div class="input-group-addon"><i class="fa fa-calendar"></i></div><input type="text" class="form-control datepicker" id="return_from_date"></div></div></div>
+                <div class="col-md-4"><div class="form-group"><label for="return_to_date">To Date</label><div class="input-group date"><div class="input-group-addon"><i class="fa fa-calendar"></i></div><input type="text" class="form-control datepicker" id="return_to_date"></div></div></div>
+                <div class="col-md-4"><div class="form-group"><label for="sales_type">Type</label><select class="form-control" id="sales_type"><option value="all">All</option><option value="retail">Retail</option><option value="wholesale">Wholesale</option></select></div></div>
               </div></div>
             </div>
             <!-- /.box-header -->
@@ -234,17 +234,16 @@
                   <th class="text-center">
                     <input type="checkbox" class="group_check checkbox" >
                   </th>
-                  <!-- <th><?= $this->lang->line('store_name'); ?></th> -->
-                  <th><?= $this->lang->line('return_date'); ?></th>
-                  <th><?= $this->lang->line('sales_code'); ?></th>
+                  <th><?= $this->lang->line('invoice_date'); ?></th>
+                  <th><?= $this->lang->line('invoice_no'); ?></th>
                   <th><?= $this->lang->line('return_code'); ?></th>
                   <th><?= $this->lang->line('return_status'); ?></th>
-                  <th><?= $this->lang->line('reference_no'); ?></th>
+                  <th><?= $this->lang->line('reference'); ?></th>
                   <th><?= $this->lang->line('customer_name'); ?></th>
                   <!-- <th>Warehouse</th> -->
                   <th><?= $this->lang->line('total'); ?></th>
-                  <th><?= $this->lang->line('paid_amount'); ?></th>
-                  <th><?= $this->lang->line('payment_status'); ?></th>
+                  <th><?= $this->lang->line('paid'); ?></th>
+                  <th class="text-center"><?= $this->lang->line('status'); ?></th>
                   <th><?= $this->lang->line('created_by'); ?></th>
                   <th><?= $this->lang->line('action'); ?></th>
                 </tr>
@@ -376,7 +375,7 @@
                   "orderable": false, //set not orderable
               },
               {
-                  "targets" :[0],
+                  "targets" :[0, 9],
                   "className": "text-center",
               },
               
@@ -430,16 +429,16 @@
       });
       $("#filter_dptid").on("change",function(){
         $.post("<?=base_url('items/get_category_data');?>",{id:$(this).val()},function(data){
-          var options='<option value="">-All Categories-</option>';
+          var options='<option value="">All Categories</option>';
           $.each(data,function(_,category){ options+='<option value="'+category.id+'">'+category.category_name+'</option>'; });
           $("#filter_category_id").html(options).val('').trigger('change.select2');
-          $("#filter_scatid").html('<option value="">-All Sub Categories-</option>').val('').trigger('change.select2');
+          $("#filter_scatid").html('<option value="">All Sub Categories</option>').val('').trigger('change.select2');
           $('#example2').DataTable().destroy(); load_datatable();
         },'json');
       });
       $("#filter_category_id").on("change",function(){
         $.post("<?=base_url('items/get_sub_category_data');?>",{id:$(this).val()},function(data){
-          var options='<option value="">-All Sub Categories-</option>';
+          var options='<option value="">All Sub Categories</option>';
           $.each(data,function(_,subcategory){ options+='<option value="'+subcategory.scatid+'">'+subcategory.scatName+'</option>'; });
           $("#filter_scatid").html(options).val('').trigger('change.select2');
           $('#example2').DataTable().destroy(); load_datatable();

@@ -1075,7 +1075,6 @@ class Sales_model extends CI_Model {
                <td id="td_<?=$rowcount;?>_1">
                   <label class='form-control' style='height:auto;' data-toggle="tooltip" title='Edit ?' >
                   <a id="td_data_<?=$rowcount;?>_1" href="javascript:void()" onclick="show_sales_item_modal(<?=$rowcount;?>)" title=""><?=$item_name;?></a> 
-                  		<i onclick="show_sales_item_modal(<?=$rowcount;?>)" class="fa fa-edit pointer"></i>
                   	</label>
                </td>
 
@@ -1089,10 +1088,10 @@ class Sales_model extends CI_Model {
                <td id="td_<?=$rowcount;?>_3">
                   <div class="input-group ">
                      <span class="input-group-btn">
-                     <button onclick="decrement_qty(<?=$rowcount;?>)" type="button" class="btn btn-default btn-flat"><i class="fa fa-minus text-danger"></i></button></span>
+                     <button onclick="decrement_qty(<?=$rowcount;?>)" type="button" class="btn btn-danger btn-flat" style="background-color: #dd4b39; color: #fff; border-color: #d73925;"><i class="fa fa-minus"></i></button></span>
                      <input typ="text" value="<?=format_qty($item_sales_qty);?>" class="form-control no-padding text-center" onkeyup="calculate_tax(<?=$rowcount;?>)" id="td_data_<?=$rowcount;?>_3" name="td_data_<?=$rowcount;?>_3">
                      <span class="input-group-btn">
-                     <button onclick="increment_qty(<?=$rowcount;?>)" type="button" class="btn btn-default btn-flat"><i class="fa fa-plus text-success"></i></button></span>
+                     <button onclick="increment_qty(<?=$rowcount;?>)" type="button" class="btn btn-success btn-flat" style="background-color: #00a65a; color: #fff; border-color: #008d4c;"><i class="fa fa-plus"></i></button></span>
                   </div>
                </td>
                

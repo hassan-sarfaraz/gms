@@ -51,6 +51,12 @@
     font-weight: bold;
     font-size: 14px;
 }
+#example2 th.text-center, #example2 td.text-center {
+    text-align: center !important;
+}
+#example2 td.text-center .label {
+    display: inline-block;
+}
 
 </style>
 <!-- bootstrap datepicker -->
@@ -157,7 +163,7 @@ $sales_due_total = $this->db->select("COALESCE(SUM(sales_due),0) AS sales_due")-
             <span class="info-box-icon bg-5"><i class="fa fa-dollar"></i></span>
 
             <div class="info-box-content">
-              <span class="info-box-text" ><?=$CI->currency(kmb($sal_total));?></span>
+              <span class="info-box-text" ><?=kmb($sal_total);?></span>
               <span class="info-box-number"><?=$this->lang->line('total_invoices_amount');?></span>
             </div>
             <!-- /.info-box-content -->
@@ -174,7 +180,7 @@ $sales_due_total = $this->db->select("COALESCE(SUM(sales_due),0) AS sales_due")-
             <span class="info-box-icon bg-5"><i class="fa fa-money"></i></span>
 
             <div class="info-box-content">
-              <span class="info-box-text" ><?=$CI->currency(kmb($tot_received_amt));?></span>
+              <span class="info-box-text" ><?=kmb($tot_received_amt);?></span>
               <span class="info-box-number"><?=$this->lang->line('total_received_amount');?></span>
             </div>
             <!-- /.info-box-content -->
@@ -187,7 +193,7 @@ $sales_due_total = $this->db->select("COALESCE(SUM(sales_due),0) AS sales_due")-
             <span class="info-box-icon bg-5"><i class="fa fa-minus-circle"></i></span>
 
             <div class="info-box-content">
-              <span class="info-box-text" ><?=$CI->currency(kmb($sales_due_total));?></span>
+              <span class="info-box-text" ><?=kmb($sales_due_total);?></span>
               <span class="info-box-number"><?=$this->lang->line('total_sales_due');?></span>
             </div>
             <!-- /.info-box-content -->
@@ -213,7 +219,7 @@ $sales_due_total = $this->db->select("COALESCE(SUM(sales_due),0) AS sales_due")-
                 <div class="col-md-2 pull-right">
                   <?php if ($CI->permissions('sales_add')) {?>
                   <div class="box-tools">
-                <a class="btn btn-block btn-info" href="<?php echo $base_url; ?>sales/add">
+                <a class="btn btn-block btn-info" style="font-size:16px;" href="<?php echo $base_url; ?>sales/add">
                 <i class="fa fa-plus"></i> <?=$this->lang->line('new_sales');?></a>
               </div>
                  <?php }?>
@@ -235,11 +241,41 @@ $sales_due_total = $this->db->select("COALESCE(SUM(sales_due),0) AS sales_due")-
 }?>
                 <!-- Warehouse Code end -->
 
+                <?php $sales_departments = $this->db->select('*')->from('db_department')->get()->result(); ?>
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label for="filter_dptid">Department</label>
+                      <select class="form-control select2" id="filter_dptid" style="width:100%;">
+                        <option value="">All Departments</option>
+                        <?php foreach($sales_departments as $department){ ?>
+                          <option value="<?= $department->dptid; ?>"><?= $department->dptName; ?></option>
+                        <?php } ?>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label for="filter_category_id">Category</label>
+                      <select class="form-control select2" id="filter_category_id" style="width:100%;">
+                        <option value="">All Categories</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="col-md-4">
+                    <div class="form-group">
+                      <label for="filter_scatid">Sub Category</label>
+                      <select class="form-control select2" id="filter_scatid" style="width:100%;">
+                        <option value="">All Sub Categories</option>
+                      </select>
+                    </div>
+                  </div>
                 <div class="col-md-4">
                     <div class="form-group">
-                       <label for="search_customer_id"><?=$this->lang->line('customers');?> </label></label>
+                       <label for="search_customer_id"><?=$this->lang->line('customers');?> </label>
                        <select class="form-control select2" id="search_customer_id" name="search_customer_id"  style="width: 100%;">
-                        <option value="">-All Customers-</option>
+                        <option value="">All Customers</option>
                         <?=get_customers_select_list(null,get_current_store_id());?>
                      </select>
                        <span id="search_customer_id_msg" style="display:none" class="text-danger"></span>
@@ -248,7 +284,7 @@ $sales_due_total = $this->db->select("COALESCE(SUM(sales_due),0) AS sales_due")-
 
                   <div class="col-md-4">
                     <div class="form-group">
-                       <label for="users"><?=$this->lang->line('users');?> </label></label>
+                       <label for="users"><?=$this->lang->line('users');?> </label>
                        <select class="form-control select2" id="users" name="users"  style="width: 100%;">
                         <?php if(is_admin() || is_store_admin()){ ?>
                           <?=get_users_select_list($this->session->userdata("role_id"), get_current_store_id());?>
@@ -260,42 +296,11 @@ $sales_due_total = $this->db->select("COALESCE(SUM(sales_due),0) AS sales_due")-
                     </div>
                   </div>
 
-                  <?php $sales_departments = $this->db->select('*')->from('db_department')->get()->result(); ?>
-                  <div class="col-md-3">
-                    <div class="form-group">
-                      <label for="filter_dptid">Department</label>
-                      <select class="form-control select2" id="filter_dptid" style="width:100%;">
-                        <option value="">-All Departments-</option>
-                        <?php foreach($sales_departments as $department){ ?>
-                          <option value="<?= $department->dptid; ?>"><?= $department->dptName; ?></option>
-                        <?php } ?>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div class="col-md-3">
-                    <div class="form-group">
-                      <label for="filter_category_id">Category</label>
-                      <select class="form-control select2" id="filter_category_id" style="width:100%;">
-                        <option value="">-All Categories-</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div class="col-md-3">
-                    <div class="form-group">
-                      <label for="filter_scatid">Sub Category</label>
-                      <select class="form-control select2" id="filter_scatid" style="width:100%;">
-                        <option value="">-All Sub Categories-</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div class="col-md-3">
+                  <div class="col-md-4">
                     <div class="form-group">
                       <label for="filter_salesman_id">Salesman</label>
                       <select class="form-control select2" id="filter_salesman_id" style="width:100%;">
-                        <option value="">-All Salesmen-</option>
+                        <option value="">All Salesmen</option>
                         <?= get_salesmans_select_list(null,get_current_store_id()); ?>
                       </select>
                     </div>
@@ -303,7 +308,7 @@ $sales_due_total = $this->db->select("COALESCE(SUM(sales_due),0) AS sales_due")-
 
                   <div class="col-md-4">
                     <div class="form-group">
-                       <label for="sales_from_date"><?=$this->lang->line('from_date');?> </label></label>
+                       <label for="sales_from_date"><?=$this->lang->line('from_date');?> </label>
                        <div class="input-group date">
                          <div class="input-group-addon">
                             <i class="fa fa-calendar"></i>
@@ -316,7 +321,7 @@ $sales_due_total = $this->db->select("COALESCE(SUM(sales_due),0) AS sales_due")-
 
                   <div class="col-md-4">
                     <div class="form-group">
-                       <label for="sales_to_date"><?=$this->lang->line('to_date');?> </label></label>
+                       <label for="sales_to_date"><?=$this->lang->line('to_date');?> </label>
                        <div class="input-group date">
                          <div class="input-group-addon">
                             <i class="fa fa-calendar"></i>
@@ -329,7 +334,7 @@ $sales_due_total = $this->db->select("COALESCE(SUM(sales_due),0) AS sales_due")-
 
                   <div class="col-md-4">
                     <div class="form-group">
-                       <label for="sales_type"> Type </label></label>
+                       <label for="sales_type"> Type </label>
                        <select class="form-control" id="sales_type" name="sales_type"  style="width: 100%;">
                          <option value="all">All</option>
                          <option value="retail">Retail</option>
@@ -361,16 +366,16 @@ $sales_due_total = $this->db->select("COALESCE(SUM(sales_due),0) AS sales_due")-
                     <input type="checkbox" class="group_check checkbox" >
                   </th>
                   <!-- <th><?=$this->lang->line('store_name');?></th> -->
-                  <th><?=$this->lang->line('sales_date');?></th>
+                  <th><?=$this->lang->line('invoice_date');?></th>
                   <th><?=$this->lang->line('due_date');?></th>
-                  <th><?=$this->lang->line('sales_code');?></th>
+                  <th><?=$this->lang->line('invoice_no');?></th>
                   <!-- <th><?=$this->lang->line('sales_status');?></th> -->
-                  <th><?=$this->lang->line('reference_no');?></th>
+                  <th><?=$this->lang->line('reference');?></th>
                   <th><?=$this->lang->line('customer_name');?></th>
                   <!-- <th>Warehouse</th> -->
                   <th><?=$this->lang->line('total');?></th>
-                  <th><?=$this->lang->line('paid_amount');?></th>
-                  <th><?=$this->lang->line('payment_status');?></th>
+                  <th><?=$this->lang->line('paid');?></th>
+                  <th class="text-center"><?=$this->lang->line('status');?></th>
                   <th><?=$this->lang->line('created_by');?></th>
                   <th><?=$this->lang->line('action');?></th>
                 </tr>
@@ -504,7 +509,7 @@ $sales_due_total = $this->db->select("COALESCE(SUM(sales_due),0) AS sales_due")-
                   "orderable": false, //set not orderable
               },
               {
-                  "targets" :[0],
+                  "targets" :[0, 8],
                   "className": "text-center",
               },
 
@@ -559,10 +564,10 @@ $sales_due_total = $this->db->select("COALESCE(SUM(sales_due),0) AS sales_due")-
 
       $("#filter_dptid").on("change",function(){
         $.post("<?= base_url('items/get_category_data'); ?>",{id:$(this).val()},function(data){
-          var options='<option value="">-All Categories-</option>';
+          var options='<option value="">All Categories</option>';
           $.each(data,function(_,category){ options+='<option value="'+category.id+'">'+category.category_name+'</option>'; });
           $("#filter_category_id").html(options).val('').trigger('change.select2');
-          $("#filter_scatid").html('<option value="">-All Sub Categories-</option>').val('').trigger('change.select2');
+          $("#filter_scatid").html('<option value="">All Sub Categories</option>').val('').trigger('change.select2');
           $('#example2').DataTable().destroy();
           load_datatable();
         },'json');
@@ -570,7 +575,7 @@ $sales_due_total = $this->db->select("COALESCE(SUM(sales_due),0) AS sales_due")-
 
       $("#filter_category_id").on("change",function(){
         $.post("<?= base_url('items/get_sub_category_data'); ?>",{id:$(this).val()},function(data){
-          var options='<option value="">-All Sub Categories-</option>';
+          var options='<option value="">All Sub Categories</option>';
           $.each(data,function(_,subcategory){ options+='<option value="'+subcategory.scatid+'">'+subcategory.scatName+'</option>'; });
           $("#filter_scatid").html(options).val('').trigger('change.select2');
           $('#example2').DataTable().destroy();

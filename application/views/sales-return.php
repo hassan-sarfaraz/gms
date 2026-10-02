@@ -151,7 +151,7 @@
                               <!-- Store Code end -->
                               <!-- Warehouse Code -->
                               <?php 
-                               if(warehouse_module() && warehouse_count()>1) {$this->load->view('warehouse/warehouse_code',array('show_warehouse_select_box'=>true,'warehouse_id'=>$warehouse_id,'div_length'=>'col-sm-3','show_select_option'=>false)); }else{
+                               if(warehouse_module() && warehouse_count()>1) {$this->load->view('warehouse/warehouse_code',array('show_warehouse_select_box'=>true,'warehouse_id'=>$warehouse_id,'div_length'=>'col-sm-3','show_select_option'=>false,'label'=>'Branch Name')); }else{
                                 echo "<input type='hidden' name='warehouse_id' id='warehouse_id' value='".get_store_warehouse_id()."'>";
                                }
                               ?>
@@ -159,7 +159,7 @@
                               
                               <div class="form-group">
                               <?php if(!empty($sales_code)) { ?>
-                                 <label for="" class="col-sm-2 control-label"><?= $this->lang->line('sales_code'); ?><label class="text-danger">*</label> </label>
+                                 <label for="" class="col-sm-2 control-label"><?= $this->lang->line('invoice_no'); ?><label class="text-danger">*</label> </label>
                                   <label class="col-sm-3 control-label" style="text-align: left;"><?= $sales_code;?></label>
                                 <?php } ?>
                                 <?php if(!empty($customer_name)) { ?>
@@ -190,7 +190,7 @@
 
                               
 
-                                 <label for="return_date" class="col-sm-2 control-label"><?= $this->lang->line('date'); ?> <label class="text-danger">*</label></label>
+                                 <label for="return_date" class="col-sm-2 control-label"><?= $this->lang->line('invoice_date'); ?> <label class="text-danger">*</label></label>
                                  <div class="col-sm-3">
                                     <div class="input-group date">
                                        <div class="input-group-addon">
@@ -217,7 +217,7 @@
                                        </select>
                                     <span id="return_status_msg" style="display:none" class="text-danger"></span>
                                  </div>
-                                  <label for="reference_no" class="col-sm-2 control-label"><?= $this->lang->line('reference_no'); ?> </label>
+                                  <label for="reference_no" class="col-sm-2 control-label"><?= $this->lang->line('reference'); ?> </label>
                                  <div class="col-sm-3">
                                     <input type="text" value="<?php echo  $reference_no; ?>" class="form-control " id="reference_no" name="reference_no" placeholder="" >
                   <span id="reference_no_msg" style="display:none" class="text-danger"></span>
@@ -261,9 +261,9 @@
                                                    <th rowspan='2' style="width:15%"><?= $this->lang->line('item_name'); ?></th>
                                                    <th rowspan='2' style="width:18.5%;min-width: 180px;"><?= $this->lang->line('quantity'); ?></th>
                                                    <th rowspan='2' style="width:10%"><?= $this->lang->line('unit_price'); ?></th> 
-                                                   <th rowspan='2' style="width:10%"><?= $this->lang->line('discount'); ?>(<?=$CI->currency()?>)</th>
-                                                   <th rowspan='2' style="width:5%"><?= $this->lang->line('tax'); ?></th>
-                                                   <th rowspan='2' style="width:10%"><?= $this->lang->line('tax_amount'); ?></th>
+                                                   <th rowspan='2' style="width:10%"><?= $this->lang->line('discount'); ?></th>
+                                                   <th rowspan='2' style="width:10%"><?= $this->lang->line('vat_amount'); ?></th>
+                                                   <th rowspan='2' style="width:5%"><?= $this->lang->line('vat_percentage'); ?></th>
                                                    <th rowspan='2' style="width:7.5%"><?= $this->lang->line('total_amount'); ?></th>
                                                    <th rowspan='2' style="width:3%"><?= $this->lang->line('action'); ?></th>
                                                 </tr>
@@ -293,7 +293,7 @@
                                        </div>
                                     </div>
                                  </div>
-                                 <div class="row">
+                                 <div class="row" style="display:none;">
                                     <div class="col-md-12">
                                        <div class="form-group">
                                           <label for="other_charges_input" class="col-sm-4 control-label"><?= $this->lang->line('other_charges'); ?></label>    
@@ -308,7 +308,7 @@
                                        </div>
                                     </div>
                                  </div>
-                                 <div class="row">
+                                 <div class="row" style="display:none;">
                                     <div class="col-md-12">
                                        <div class="form-group">
                                           <label for="other_charges_input" class="col-sm-4 control-label"><?= $this->lang->line('discountCouponCode'); ?></label>    
@@ -359,7 +359,7 @@
                                 <div class="row">
                                     <div class="col-md-12">
                                        <div class="form-group">
-                                          <label for="return_note" class="col-sm-4 control-label"><?= $this->lang->line('note'); ?></label>    
+                                          <label for="return_note" class="col-sm-4 control-label">Comments</label>
                                           <div class="col-sm-8">
                                              <textarea class="form-control text-left" id='return_note' name="return_note"><?= $return_note; ?></textarea>
                                             <span id="return_note_msg" style="display:none" class="text-danger"></span>
@@ -384,13 +384,13 @@
                                                    <h4><b id="subtotal_amt" name="subtotal_amt">0.00</b></h4>
                                                 </th>
                                              </tr>
-                                             <tr>
+                                             <tr style="display:none;">
                                                 <th class="text-right" style="font-size: 17px;"><?= $this->lang->line('other_charges'); ?></th>
                                                 <th class="text-right" style="padding-left:10%;font-size: 17px;">
                                                    <h4><b id="other_charges_amt" name="other_charges_amt">0.00</b></h4>
                                                 </th>
                                              </tr>
-                                             <tr>
+                                             <tr style="display:none;">
                                                 <th class="text-right" style="font-size: 17px;"><?= $this->lang->line('couponDiscount'); ?></th>
                                                 <th class="text-right" style="padding-left:10%;font-size: 17px;">
                                                    <h4><b id="coupon_discount_amt" name="coupon_discount_amt">0.00</b></h4>

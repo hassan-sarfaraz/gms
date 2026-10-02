@@ -117,11 +117,11 @@ class Sales extends MY_Controller {
 			$row[] = store_total_format($sales->paid_amount);
 					$str='';
 					if($sales->payment_status=='Unpaid')
-			          $str= "<span class='label label-danger' style='cursor:pointer'>Unpaid </span>";
+			          $str= "<span class='label label-danger' style='cursor:pointer'>Unpaid</span>";
 			        if($sales->payment_status=='Partial')
-			          $str="<span class='label label-warning' style='cursor:pointer'> Partial </span>";
+			          $str="<span class='label label-warning' style='cursor:pointer'>Partial</span>";
 			        if($sales->payment_status=='Paid')
-			          $str="<span class='label label-success' style='cursor:pointer'> Paid </span>";
+			          $str="<span class='label label-success' style='cursor:pointer'>Paid</span>";
 
 			$row[] = $str;
 			$row[] = ucfirst($sales->created_by);

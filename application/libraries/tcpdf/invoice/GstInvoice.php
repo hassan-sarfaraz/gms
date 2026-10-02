@@ -412,7 +412,7 @@ class GstInvoice extends MyPDF{
 			        <th colspan="1" style="text-align:center;width: ' . $colW['qty'] . '">' . $this->CI->lang->line("qty") . '</th>
 			        <th colspan="1" class="text-center" style="width: ' . $colW['rate'] . '">Rate</th>
 					 <th colspan="1" class="text-center" style="width: ' . $colW['dis'] . '">Dis </th>
-			        <th colspan="1" class="text-center" style="width: ' . $colW['tax'] . '"><nobr>Tax(5%)&nbsp;(<img src="'.base_url('uploads/logo-black.png').'" width="8" height="8" align="top">)</nobr></th>
+			        <th colspan="1" class="text-center" style="width: ' . $colW['tax'] . '"><nobr>Tax(15%)&nbsp;(<img src="'.base_url('uploads/logo-black.png').'" width="8" height="8" align="top">)</nobr></th>
 			        <th colspan="1" class="text-right" style="width: ' . $colW['amount'] . '"><nobr>' . $this->CI->lang->line("amount") . '&nbsp;(<img src="'.base_url('uploads/logo-black.png').'" width="8" height="8" align="top">)</nobr></th>
 		        </tr>
 		    </thead>
@@ -515,6 +515,8 @@ class GstInvoice extends MyPDF{
 			: $tot_discount_amt + (isset($sales->tot_discount_to_all_amt) ? (float) $sales->tot_discount_to_all_amt : 0);
 		$invoice_net_total = round_off_amount($sales->grand_total);
 		$change_return_amount = (float) get_change_return_amount($sales->id);
+		$taxable_base = $invoice_net_total - $tot_tax_amt;
+		$calc_subtotal = $taxable_base + $invoice_discount_amt;
 
 
 		$summary_gap = ($pageWidth < 160) ? 4 : 20;
@@ -542,7 +544,7 @@ class GstInvoice extends MyPDF{
 		// Row 1 Totals: SubTotal
 		$tbl .= '<td class="text-left" style="height:22px; width: '.$col_r_left.'%; font-size:15px; border-bottom:0.5px solid #000000; border-left:0.5px solid #000000; border-right:0.5px solid #000000;">SubTotal</td>';
 		$tbl .= '<td style="height:22px; font-size:15px; width: '.$col_r_right.'%; border-bottom:0.5px solid #000000; border-left:0.5px solid #000000; border-right:0.5px solid #000000;" class="text-right">';
-		$tbl .= store_number_format($sub_total);
+		$tbl .= store_number_format($calc_subtotal);
 		$tbl .= '</td>';
 		$tbl .= '</tr>';
 
@@ -556,7 +558,7 @@ class GstInvoice extends MyPDF{
 
 		// Row 3 Totals: VAT
 		$tbl .= '<tr>';
-		$tbl .= '<td class="text-left" style="height:22px; width: '.$col_r_left.'%; font-size:15px; border-bottom:none; border-left:0.5px solid #000000; border-right:0.5px solid #000000;">VAT (5%)</td>';
+		$tbl .= '<td class="text-left" style="height:22px; width: '.$col_r_left.'%; font-size:15px; border-bottom:none; border-left:0.5px solid #000000; border-right:0.5px solid #000000;">VAT (15%)</td>';
 		$tbl .= '<td class="text-right" style="height:22px; font-size:15px; width: '.$col_r_right.'%; border-bottom:none; border-left:0.5px solid #000000; border-right:0.5px solid #000000;">';
 		$tbl .= store_number_format($tot_tax_amt);
 		$tbl .= '</td>';
@@ -584,7 +586,7 @@ class GstInvoice extends MyPDF{
 		$tbl .= '</div>';
 		$tbl .= '</td>';
 
-		$tbl .= '<td class="text-left text-bold" style="width: '.$col_r_left.'%; height:24px; font-size:15px; border-top:none; border-bottom:0.5px solid #000000; border-left:0.5px solid #000000; border-right:0.5px solid #000000;">Net Total</td>';
+		$tbl .= '<td class="text-left text-bold" style="width: '.$col_r_left.'%; height:24px; font-size:15px; border-top:none; border-bottom:0.5px solid #000000; border-left:0.5px solid #000000; border-right:0.5px solid #000000;">Net Amount</td>';
 		$tbl .= '<td class="text-right text-bold" style="width: '.$col_r_right.'%; height:24px; font-size:15px; border-top:none; border-bottom:0.5px solid #000000; border-left:0.5px solid #000000; border-right:0.5px solid #000000;">' . store_number_format($invoice_net_total) . '</td>';
 		$tbl .= '</tr>';
 
@@ -595,35 +597,20 @@ class GstInvoice extends MyPDF{
 		$tbl .= '<table cellpadding="8" class="signatures-table" nobr="true" style="width:100%;">
 	            <tbody>';
 	    
-        $show_paid_img = false;
-	    if(!empty($store->qr_image)){
-	        $payment_query = $this->CI->db->from('db_salespayments')->where('sales_id', $sales->id)->order_by('id','desc')->get();
-	        if ($payment_query->num_rows() > 0) {
-	            $payment_row = $payment_query->first_row();
-	            if (!empty($payment_row) && strtoupper($payment_row->payment_type) == 'CASH') {
-	                $show_paid_img = true;
-	            }
-	        }
-	    }
-	    $signature_box_width = $show_paid_img ? '25%' : '33.3333%';
+	    $signature_box_width = '33.3333%';
 	    
 	    $tbl .='<tr nobr="true">';
 	    // Box 1: Receiver's Sign
 	    $tbl .= '<td style="border:1px solid #333; text-align:center; font-weight:bold; font-size:11px; width:'.$signature_box_width.'; vertical-align:bottom;"><br><br><br><br><br>Receiver\'s Sign<br>___________________</td>';
-	    
-        // Box 2: Paid
-        if ($show_paid_img) {
-            $tbl .= '<td class="text-center" style="border:1px solid #333; width:'.$signature_box_width.'; vertical-align:middle;"><br><img src="'.base_url('uploads/paid.png').'" width="80" height="80"></td>';
-        }
 
-        // Box 3: QR Code
+        // Box 2: QR Code
         if(!empty($store->qr_image)) {
             $tbl .= '<td class="text-center" style="border:1px solid #333; width:'.$signature_box_width.'; vertical-align:middle;"><br><img src="'.base_url($store->qr_image).'" width="80" height="80"></td>';
         } else {
             $tbl .= '<td style="border:1px solid #333; width:'.$signature_box_width.';"></td>';
         }
 
-        // Box 4: Prepared By
+        // Box 3: Prepared By
         $tbl .= '<td style="border:1px solid #333; text-align:center; font-weight:bold; font-size:11px; width:'.$signature_box_width.'; vertical-align:bottom;"><br><br><br><br><br>Prepared By<br>___________________</td>';
         $tbl .= '</tr>';
 	    
@@ -810,7 +797,7 @@ class GstInvoice extends MyPDF{
 			        <th colspan="1" style="text-align:center;width: '.$colW['qty'].'">'.$this->CI->lang->line("qty").'</th>
 			        <th colspan="1" class="text-center" style="width: '.$colW['rate'].'">Rate</th>
 					 <th colspan="1" class="text-center" style="width: '.$colW['dis'].'">Dis </th>
-			        <th colspan="1" class="text-center" style="width: '.$colW['tax'].'"><nobr>Tax(5%)&nbsp;(<img src="'.base_url('uploads/logo-black.png').'" width="8" height="8" align="top">)</nobr></th>
+			        <th colspan="1" class="text-center" style="width: '.$colW['tax'].'"><nobr>Tax(15%)&nbsp;(<img src="'.base_url('uploads/logo-black.png').'" width="8" height="8" align="top">)</nobr></th>
 			        <th colspan="1" class="text-right" style="width: '.$colW['amount'].'"><nobr>'.$this->CI->lang->line("amount").'&nbsp;(<img src="'.base_url('uploads/logo-black.png').'" width="8" height="8" align="top">)</nobr></th>
 		        </tr>
 		    </thead>
@@ -913,6 +900,8 @@ class GstInvoice extends MyPDF{
 			: $tot_discount_amt + (isset($sales->tot_discount_to_all_amt) ? (float) $sales->tot_discount_to_all_amt : 0);
 		$invoice_net_total = round_off_amount($sales->grand_total);
 		$change_return_amount = (float) get_change_return_amount($sales->id);
+		$taxable_base = $invoice_net_total - $tot_tax_amt;
+		$calc_subtotal = $taxable_base + $invoice_discount_amt;
 		
 		
 		$summary_gap = ($pageWidth < 160) ? 4 : 20;
@@ -938,7 +927,7 @@ class GstInvoice extends MyPDF{
 		// Row 1 Totals: SubTotal
 		$tbl .= '<td class="text-left" style="height:22px; width: '.$col_r_left.'%; font-size:13px; border-bottom:0.5px solid #000000; border-left:0.5px solid #000000; border-right:0.5px solid #000000;">SubTotal</td>';
 		$tbl .= '<td style="height:22px; font-size:13px; width: '.$col_r_right.'%; border-bottom:0.5px solid #000000; border-left:0.5px solid #000000; border-right:0.5px solid #000000;" class="text-right">';
-		$tbl .= store_number_format($sub_total);
+		$tbl .= store_number_format($calc_subtotal);
 		$tbl .= '</td>';
 		$tbl .= '</tr>';
 
@@ -952,7 +941,7 @@ class GstInvoice extends MyPDF{
 
 		// Row 3 Totals: VAT
 		$tbl .= '<tr>';
-		$tbl .= '<td class="text-left" style="height:22px; width: '.$col_r_left.'%; font-size:13px; border-bottom:none; border-left:0.5px solid #000000; border-right:0.5px solid #000000;">VAT (5%)</td>';
+		$tbl .= '<td class="text-left" style="height:22px; width: '.$col_r_left.'%; font-size:13px; border-bottom:none; border-left:0.5px solid #000000; border-right:0.5px solid #000000;">VAT (15%)</td>';
 		$tbl .= '<td class="text-right" style="height:22px; font-size:13px; width: '.$col_r_right.'%; border-bottom:none; border-left:0.5px solid #000000; border-right:0.5px solid #000000;">';
 		$tbl .= store_number_format($tot_tax_amt);
 		$tbl .= '</td>';
@@ -980,7 +969,7 @@ class GstInvoice extends MyPDF{
 		$tbl .='</div>';
 		$tbl .= '</td>';
 
-		$tbl .= '<td class="text-left text-bold" style="width: '.$col_r_left.'%; height:24px; font-size:15px; border-top:none; border-bottom:0.5px solid #000000; border-left:0.5px solid #000000; border-right:0.5px solid #000000;">Net Total</td>';
+		$tbl .= '<td class="text-left text-bold" style="width: '.$col_r_left.'%; height:24px; font-size:15px; border-top:none; border-bottom:0.5px solid #000000; border-left:0.5px solid #000000; border-right:0.5px solid #000000;">Net Amount</td>';
 		$tbl .= '<td class="text-right text-bold" style="width: '.$col_r_right.'%; height:24px; font-size:15px; border-top:none; border-bottom:0.5px solid #000000; border-left:0.5px solid #000000; border-right:0.5px solid #000000;">' . store_number_format($invoice_net_total) . '</td>';
 		$tbl .= '</tr>';
 
@@ -999,35 +988,20 @@ class GstInvoice extends MyPDF{
 	$tbl .='<table cellpadding="'.$signature_padding.'" class="signatures-table" nobr="true" style="width:100%;">
 	            <tbody>';
 	            
-	    $show_paid_img = false;
-	    if(!empty($store->qr_image)){
-	        $payment_query = $this->CI->db->from('db_salespayments')->where('sales_id', $sales->id)->order_by('id','desc')->get();
-	        if ($payment_query->num_rows() > 0) {
-	            $payment_row = $payment_query->first_row();
-	            if (!empty($payment_row) && strtoupper($payment_row->payment_type) == 'CASH') {
-	                $show_paid_img = true;
-	            }
-	        }
-	    }
-	    $signature_box_width = $show_paid_img ? '25%' : '33.3333%';
+	    $signature_box_width = '33.3333%';
 	    
 	    $tbl .='<tr nobr="true">';
 	    // Box 1: Receiver's Sign
 	    $tbl .= '<td style="border:1px solid #333; text-align:center; font-weight:bold; font-size:'.$signature_font_size.'px; width:'.$signature_box_width.'; vertical-align:bottom;">'.$signature_breaks.'Receiver\'s Sign<br>___________________</td>';
-	    
-        // Box 2: Paid
-        if ($show_paid_img) {
-	            $tbl .= '<td class="text-center" style="border:1px solid #333; width:'.$signature_box_width.'; vertical-align:middle;"><img src="'.base_url('uploads/paid.png').'" width="'.$signature_image_size.'" height="'.$signature_image_size.'"></td>';
-        }
 
-        // Box 3: QR Code
+        // Box 2: QR Code
         if(!empty($store->qr_image)) {
 	            $tbl .= '<td class="text-center" style="border:1px solid #333; width:'.$signature_box_width.'; vertical-align:middle;"><img src="'.base_url($store->qr_image).'" width="'.$signature_image_size.'" height="'.$signature_image_size.'"></td>';
         } else {
             $tbl .= '<td style="border:1px solid #333; width:'.$signature_box_width.';"></td>';
         }
 
-        // Box 4: Prepared By
+        // Box 3: Prepared By
 	        $tbl .= '<td style="border:1px solid #333; text-align:center; font-weight:bold; font-size:'.$signature_font_size.'px; width:'.$signature_box_width.'; vertical-align:bottom;">'.$signature_breaks.'Prepared By<br>___________________</td>';
         $tbl .= '</tr>';
 	    
