@@ -1,0 +1,937 @@
+
+document.addEventListener('DOMContentLoaded', function(){
+    var navbar = document.querySelector('.main-header .navbar');
+    if(navbar){
+        document.documentElement.style.setProperty(
+            '--pos-nav-light-blue',
+            window.getComputedStyle(navbar).backgroundColor
+        );
+    }
+});
+
+// Salesman is mandatory before any POS action button can continue.
+document.addEventListener('click', function(event){
+    var actionButton = event.target.closest(
+        '#hold_invoice, #show_credit_modal, .show_payments_modal, #show_card_modal, #show_cash_modal, #pay_all'
+    );
+
+    if(actionButton && !$("#salesman_id").val()){
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        toastr["warning"]("Please Select Salesman!!");
+        $("#salesman_id").select2("open");
+    }
+}, true);
+
+//On Enter Move the cursor to desigtation Id
+function shift_cursor(kevent,target){
+
+    if(kevent.keyCode==13){
+		$("#"+target).focus();
+    }
+	
+}
+/*Email validation code*/
+function validateEmail(sEmail) {
+    var filter = /^([\w-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([\w-]+\.)+))([a-zA-Z]{2,9}|[0-9]{1,3})(\]?)$/;
+    if (filter.test(sEmail)) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+function uncheck_allow_tot_advance(){
+  //verify is checked ?
+  if($("#allow_tot_advance").is(':checked')){
+    $("#click_to_uncheck").trigger("click");
+  }
+}
+
+$("#pay_all").on("click",function(){
+	save(print=true,pay_all=true);
+});
+
+function save(print=false,pay_all=false){
+
+//$('.make_sale').on("click",function (e) {
+	
+	var base_url=$("#base_url").val();
+	var send_invoice_email=$("#send_invoice_email").is(':checked');
+	var send_invoice_whatsapp=$("#send_invoice_whatsapp").is(':checked');
+
+    if(!$("#salesman_id").val()){
+        toastr["warning"]("Please Select Salesman!!");
+        $("#salesman_id").select2("open");
+        return;
+    }
+    
+    if($(".items_table tr").length==1){
+    	toastr["warning"]("Empty Sales List!!");
+		return;
+    }
+
+
+	//RETRIVE ALL DYNAMIC HTML VALUES
+    var tot_qty=$(".tot_qty").text();
+    var tot_amt=$(".tot_amt").text();
+    var tot_disc=$(".tot_disc").text();
+    var tot_grand=$(".tot_grand").text();
+
+    var paid_amt=(pay_all) ? tot_grand : $(".sales_div_tot_paid").text();
+    var balance=(pay_all) ? 0 : parseFloat($(".sales_div_tot_balance").text());
+
+
+   /* var paid_amt=$(".sales_div_tot_paid").text();
+    var balance=parseFloat($(".sales_div_tot_balance").text());*/
+    //var walk_in_customer_name=$("#walk_in_customer_name").text();
+    var customer_id=$("#customer_id").val();
+
+    /* walk_in_customer_name defined in pos.php */
+    var is_credit_sale = $("#direct_payment_type").val() === "CREDIT";
+    $("select[id^='payment_type_']").each(function(){
+		if(String($(this).val()).toUpperCase() === "CREDIT"){
+			is_credit_sale = true;
+		}
+    });
+    if($('option:selected', "#customer_id").attr('data-delete_bit')==1 && is_credit_sale){
+		toastr["warning"]("Credit sale is not allowed for Walk-in Customer. Please select another customer.");
+		return;
+    }
+    if($('option:selected', "#customer_id").attr('data-delete_bit')==1 && balance!=0 && !is_credit_sale){
+    	toastr["warning"]("Walk-in Customer Should Pay Complete Amount!!");
+		return;
+    }
+    if(document.getElementById("sales_id")){
+    	var command = 'update';
+    }
+    else{
+    	var command = 'save';
+    }
+    var this_btn='make_sale';
+
+	//swal({ title: "Are you sure?",icon: "warning",buttons: true,dangerMode: true,}).then((sure) => {
+			 // if(sure) {//confirmation start
+
+		
+		$("#"+this_btn).attr('disabled',true);  //Enable Save or Update button
+		//e.preventDefault();
+		var data = new Array(2);
+		data= new FormData($('#pos-form')[0]);//form name
+		/*Check XSS Code*/
+		if(!xss_validation(data)){ return false; }
+		
+		$(".box").append('<div class="overlay"><i class="fa fa-refresh fa-spin"></i></div>');
+		$.ajax({
+			type: 'POST',
+			url: base_url+'pos/pos_save_update?command='+command+'&tot_qty='+tot_qty+'&tot_amt='+tot_amt+'&tot_disc='+tot_disc+'&tot_grand='+tot_grand+"&paid_amt="+paid_amt+'&balance='+balance+"&pay_all="+pay_all,
+			data: data,
+			cache: false,
+			contentType: false,
+			processData: false,
+			success: function(result){
+				//alert(result);//return;
+
+				result=result.split("<<<###>>>");
+				
+					if(result[0]=="success")
+					{
+			            toastr['success']("Record Saved Successfully!!");
+			            success.currentTime = 0;
+			            success.play();
+			            if(send_invoice_email){
+			              if(result[5]==='success') toastr['success'](result[6] || "Invoice PDF emailed successfully.");
+			              else toastr['error'](result[6] || "Invoice email failed.");
+			            }
+			            if(send_invoice_whatsapp){
+			              var phoneNumber = result[7].replace(/[^0-9]/g, '');
+			              var inputNumber = prompt("Enter customer WhatsApp number (with country code, e.g., 923001234567):", phoneNumber);
+			              if (inputNumber !== null && inputNumber.trim() !== "") {
+			                var message = "Dear Customer, here is your invoice " + result[8] + " for " + result[9] + ". You can view or download the PDF invoice here: " + result[10];
+			                var waLink = "https://api.whatsapp.com/send?phone=" + inputNumber.replace(/[^0-9]/g, '') + "&text=" + encodeURIComponent(message);
+			                window.open(waLink, '_blank');
+			              }
+			            }
+						var warehouse_id=$("#warehouse_id").val();
+						var print_done=true;
+						if(print){
+							var print_done =window.open(base_url+"pos/print_invoice_pos/"+result[1], "_blank", "scrollbars=1,resizable=1,height=300,width=450");
+						}
+						if(print_done){
+							if(command=='update'){
+								window.location=base_url+"sales";		
+							}
+							else{
+								$(".items_table > tbody").empty();
+								$("#discount_input").val(0);
+								$("#discount_type").val("in_percentage");
+								$("#discount-modal").removeData("distributed-to-items");
+
+								/**
+								 * Note:
+								 * Uncheck the advance checkbox
+								 * Add this code before hiding modal
+								 */
+								uncheck_allow_tot_advance();
+								
+
+								$('#multiple-payments-modal').modal('hide');
+								var rc=$("#payment_row_count").val();
+								while(rc>1){
+									remove_row(rc);
+									rc--;
+								}
+								$("#pos-form")[0].reset();
+
+								$("#customer_id").val(customer_id).select2();
+
+								//console.log("result[4]="+result[4]);
+								$("#customer_id").find(':selected').attr('data-tot_advance',to_Fixed(result[4])).trigger('change');
+								
+
+
+
+								$("#search_it").val('');
+								
+								/*if warehouse enabled*/
+								if(warehouse_module){
+									$("#warehouse_id").val(warehouse_id).select2();	
+								}
+
+								
+								final_total();
+								get_details(null,true);
+                				hold_invoice_list();
+                				get_coupon_details();
+								//window.location=base_url+"pos";		
+							}
+							
+						}
+						$("#init_code").val(result[2]);
+						$("#count_id").val(result[3]);
+						
+					}
+					else if(result[0]=="failed")
+					{
+					   toastr['error']("Sorry! Failed to save Record.Try again");
+					}
+					else
+					{
+						alert(result);
+					}
+				
+				$("#"+this_btn).attr('disabled',false);  //Enable Save or Update button
+				$(".overlay").remove();
+		   }
+	   });
+	//} //confirmation sure
+		//}); //confirmation end
+
+//e.preventDefault
+
+
+//});
+}
+
+
+
+/* *********************** HOLD INVOICE START****************************/
+$('#hold_invoice').on("click",function (e) {
+
+	//table should not be empty
+	if($(".items_table tr").length==1){
+    	toastr["error"]("Please Select Items from List!!");
+    	failed.currentTime = 0;
+		failed.play();
+		return;
+    }
+
+	swal({
+		title: "Hold Invoice ? Same Reference will replace the old list if exist!!",icon: "warning",buttons: true,dangerMode: true,
+		content: {
+			element: "input",attributes: 
+			{
+				placeholder: "Please Enter Reference Number!",
+				type: "text",
+				
+				inputAttributes: {
+				    maxlength: '5'
+				  }
+			},},
+		}).then(name => {
+			//If input box blank Throw Error
+			if (!name){ throw null; return false; }
+			var reference_id = name;
+			/* ********************************************************** */
+			var base_url=$("#base_url").val();
+    
+			//RETRIVE ALL DYNAMIC HTML VALUES
+		    var tot_qty=$(".tot_qty").text();
+		    var tot_amt=$(".tot_amt").text();
+		    var tot_disc=$(".tot_disc").text();
+		    var tot_grand=$(".tot_grand").text();
+		    var hidden_rowcount=$("#hidden_rowcount").val();
+
+		    var this_id=this.id;//id=save or id=update
+
+				e.preventDefault();
+				data = new FormData($('#pos-form')[0]);//form name
+				/*Check XSS Code*/
+				if(!xss_validation(data)){ return false; }
+				
+				$(".box").append('<div class="overlay"><i class="fa fa-refresh fa-spin"></i></div>');
+				$("#"+this_id).attr('disabled',true);  //Enable Save or Update button				
+				$.ajax({
+					type: 'POST',
+					url: base_url+'pos/hold_invoice?command='+this_id+'&tot_qty='+tot_qty+'&tot_amt='+tot_amt+'&tot_disc='+tot_disc+'&tot_grand='+tot_grand+"&reference_id="+reference_id,
+					data: data,
+					cache: false,
+					contentType: false,
+					processData: false,
+					success: function(result){
+						//alert(result);return;
+						$("#hidden_invoice_id").val('');
+						result=result.split("<<<###>>>");
+						
+							if(result[0]=="success")
+							{
+								$('#pos-form-tbody').html('');
+								//CALCULATE FINAL TOTAL AND OTHER OPERATIONS
+		    					final_total();
+
+								hold_invoice_list();
+								success.currentTime = 0;
+								success.play();
+							}
+							else if(result[0]=="failed")
+							{
+							   toastr['error']("Sorry! Failed to save Record.Try again");
+							}
+							else
+							{
+								alert(result);
+							}
+						
+						$("#"+this_id).attr('disabled',false);  //Enable Save or Update button
+						$(".overlay").remove();
+				   }
+			   });
+			/* ********************************************************** */
+
+		}) //name end
+	.catch(err => {
+	    toastr['error']("Failed!! Invoice Not Saved! <br/>Please Enter Reference Number");
+	    failed.currentTime = 0;
+		failed.play();
+	});//swal end
+
+}); //hold_invoice end
+
+function hold_invoice_list(){
+	var base_url=$("#base_url").val();
+  $.post(base_url+"pos/hold_invoice_list",{},function(result){
+  	//alert(result);
+  	var data = jQuery.parseJSON(result)
+    $("#hold_invoice_list").html('').html(data['result']);
+    $(".hold_invoice_list_count").html('').html(data['tot_count']);
+  });
+}
+function hold_invoice_delete(invoice_id){
+	swal({ title: "Are you sure?",icon: "warning",buttons: true,dangerMode: true,}).then((sure) => {
+	if(sure) {//confirmation start
+	var base_url=$("#base_url").val();
+  $.post(base_url+"pos/hold_invoice_delete/"+invoice_id,{},function(result){
+  	result=result;
+    if(result=='success'){
+    	toastr["success"]("Success! Invoice Deleted!!");
+	    success.currentTime = 0;
+		success.play();
+	    hold_invoice_list();
+    }
+    else{
+    	toastr['error']("Failed to Delete Invoice! Try again!!");
+    	failed.currentTime = 0;
+		failed.play();
+    }
+  });
+  } //confirmation sure
+		}); //confirmation end
+}
+
+function hold_invoice_edit(id){
+
+	swal({ title: "Are you sure?",icon: "warning",buttons: true,dangerMode: true,}).then((sure) => {
+	if(sure) {//confirmation start
+	var base_url=$("#base_url").val();
+
+	$(".box").append('<div class="overlay"><i class="fa fa-refresh fa-spin"></i></div>');
+	$.post(base_url+"pos/hold_invoice_edit",{hold_id:id},function(result){
+
+    		console.log(result);
+
+      result=result.split("<<<###>>>");
+      $('#pos-form-tbody').html('').append(result[0]);
+      $('#discount_input').val(result[1]);
+      $('#discount_type').val(result[2]);
+      /*if(store_module){
+        $('#store_id').val(result[4]).select2();
+      }
+      else{*/
+        $('#store_id').val(result[4]);
+      /*}*/
+      console.log("warehouse = "+result[5]);
+      if(warehouse_module){
+        $('#warehouse_id').val(result[5]).select2();
+      }
+      else{
+        $('#warehouse_id').val(result[5]);
+      }
+
+      //$('#customer_id').val(result[3]).select2();
+      //$("#customer_id").trigger("change");
+      
+      //$('#temp_customer_id').val(result[3]);
+      $('#customer_id').val(result[3]).select2();
+      $("#hidden_invoice_id").val(result[7]);
+      $("#hidden_rowcount").val(parseInt($(".items_table tr").length)-1);
+      if(typeof restore_distributed_pos_discount_state === "function"){
+        restore_distributed_pos_discount_state();
+      }
+      final_total();
+      get_details(null,true);
+      $(".overlay").remove();
+      
+      if(result[5]==1){
+        $( "#binvoice" ).prop( "checked", true );
+        $('#binvoice').parent('div').addClass('checked');
+      }
+    	});
+
+				
+		} //confirmation sure
+	}); //confirmation end
+}
+/* *********************** HOLD INVOICE END****************************/
+/* *********************** ORDER INVOICE START****************************/
+function get_id_value(id){
+	return $("#"+id).val();
+}
+$('#collect_customer_info').on("click",function (e) {
+	
+	//table should not be empty
+	if($(".items_table tr").length==1){
+    	toastr["error"]("Please Select Items from List!!");
+    	failed.currentTime = 0;
+		failed.play();
+		return;
+    }
+    if(get_id_value('customer_id')==1){
+    	//$('#customer-modal').modal('toggle');
+    	toastr["error"]("Please Select Customer!!");
+    	failed.currentTime = 0;
+		failed.play();
+    	return false;
+    }
+    else{
+    	$('#delivery-info').modal('toggle');
+    }
+}); //hold_invoice end
+$('.show_payments_modal').on("click",function (e) {
+	
+	//table should not be empty
+	if($(".items_table tr").length==1){
+    	toastr["error"]("Please Select Items from List!!");
+    	failed.currentTime = 0;
+		failed.play();
+		return;
+    }
+    else{
+    	$('#multiple-payments-modal').data('card-payment', false);
+		$("#payment_modal_title").text("Split Payment Processing");
+		$("#multiple-payments-modal").removeClass("cash-payment-modal");
+		$("#multiple-payments-modal").removeClass("card-payment-modal");
+		$("#multiple-payments-modal").removeClass("credit-payment-modal");
+		$(".cash-paid-input-wrap").hide();
+		$(".sales_div_tot_paid").show();
+		$(".payment-paid-row").show();
+		$(".payment-balance-row,.payment-change-row").show();
+		$(".payment-items-label").text("Items:");
+		$(".payment-entry-column").show();
+		$(".payment-summary-column").removeClass("pull-right");
+    	$("#direct_payment_type").val("");
+    	$("#payment_mode_icon").attr("class", "fa fa-list");
+    	$("#amount_1").prop("readonly", false);
+    	$("#amount_1").parent().parent().show();
+		$(".payment_discount_input").closest('.row').hide();
+    	adjust_payments();
+    	$("#add_payment_row,#payment_type_1").parent().show();
+    	$("#amount_1").parent().parent().removeClass('col-md-12').addClass('col-md-6');
+    	$('#multiple-payments-modal').modal('toggle');
+    }
+}); //hold_invoice end
+$('#show_cash_modal').on("click",function (e) {
+	//table should not be empty
+	if($(".items_table tr").length==1){
+    	toastr["error"]("Please Select Items from List!!");
+    	failed.currentTime = 0;
+		failed.play();
+		return;
+    }
+    else{
+    	$('#multiple-payments-modal').data('card-payment', false);
+		$("#direct_payment_type").val("Cash");
+		$("#multiple-payments-modal").addClass("cash-payment-modal");
+		$("#multiple-payments-modal").removeClass("card-payment-modal credit-payment-modal");
+		$(".payment-balance-row,.payment-change-row").show();
+		$("#payment_modal_title").text("Cash Payment Processing");
+		$(".payment-items-label").text("Items:");
+		$(".sales_div_tot_paid").hide();
+		$(".cash-paid-input-wrap").show();
+		$(".payment-paid-row").show();
+    	$("#payment_mode_icon").attr("class", "fa fa-money");
+		$(".payment-entry-column").hide();
+		$(".payment-summary-column").addClass("pull-right");
+    	$(".payment_discount_input").parent().parent().removeClass('col-md-12').addClass('col-md-6');
+    	var cash_option = $("#payment_type_1 option").filter(function(){
+    		return $.trim($(this).val()).toUpperCase() === "CASH";
+    	}).first();
+    	if(cash_option.length){
+    		$("#payment_type_1").val(cash_option.val());
+    	}
+    	else{
+    		$("#payment_type_1").append('<option value="Cash">Cash</option>').val("Cash");
+    	}
+    	$("#payment_note_1").val("Paid By Cash");
+    	adjust_payments();
+		$("#amount_1").val("").prop("readonly", false);
+		adjust_payments();
+		$(".cash-paid-input").val("").focus();
+    	$("#add_payment_row,#payment_type_1").parent().hide();
+    	$('#multiple-payments-modal').modal('toggle');
+    }
+}); //hold_invoice end
+
+$(document).on("click", "#show_card_modal", function (e) {
+	//table should not be empty
+	if($(".items_table tr").length==1){
+    	toastr["error"]("Please Select Items from List!!");
+    	failed.currentTime = 0;
+		failed.play();
+		return;
+    }
+    else{
+		$('#multiple-payments-modal').data('card-payment', true);
+		$("#direct_payment_type").val("CARD");
+		$("#multiple-payments-modal").removeClass("cash-payment-modal credit-payment-modal").addClass("card-payment-modal");
+		$(".cash-paid-input-wrap").hide();
+		$(".sales_div_tot_paid").show();
+		$(".payment-paid-row").show();
+		$("#payment_modal_title").text("Card Payment Processing");
+		$(".payment-items-label").text("Items:");
+		$(".payment-items-row,.payment-subtotal-row").show();
+		$(".payment-entry-column").hide();
+		$(".payment-summary-column").addClass("pull-right");
+		$(".payment-balance-row,.payment-change-row").hide();
+    	$("#payment_mode_icon").attr("class", "fa fa-credit-card");
+    	adjust_payments();
+
+    	// CARD may not exist in the configured payment-type list.
+    	if($("#payment_type_1 option[value='CARD']").length==0){
+    		$("#payment_type_1").append('<option value="CARD">CARD</option>');
+    	}
+    	$("#payment_type_1").val("CARD");
+    	$("#payment_note_1").val("Paid By Card");
+
+    	// Card payments collect the exact net amount after discount.
+    	$("#amount_1").val($(".sales_div_tot_payble").text()).prop("readonly", true);
+    	adjust_payments();
+
+    	$("#add_payment_row,#payment_type_1").parent().hide();
+    	$("#amount_1").parent().parent().hide();
+    	$(".payment_discount_input").parent().parent().removeClass('col-md-6').addClass('col-md-12');
+    	$('#multiple-payments-modal').modal('toggle');
+    }
+}); //show_card_modal end
+
+$(document).on("click", "#show_credit_modal", function (e) {
+	//table should not be empty
+	if($(".items_table tr").length==1){
+		toastr["error"]("Please Select Items from List!!");
+		failed.currentTime = 0;
+		failed.play();
+		return;
+	}
+	if($('option:selected', "#customer_id").attr('data-delete_bit')==1){
+		toastr["warning"]("Credit sale is not allowed for Walk-in Customer. Please select another customer.");
+		failed.currentTime = 0;
+		failed.play();
+		return;
+	}
+
+	// Keep the hidden payment equal to Net when the discount changes.
+	$('#multiple-payments-modal').data('card-payment', true);
+	$("#direct_payment_type").val("CREDIT");
+	$("#multiple-payments-modal").removeClass("cash-payment-modal card-payment-modal").addClass("credit-payment-modal");
+	$(".cash-paid-input-wrap").hide();
+	$(".sales_div_tot_paid").show();
+	$(".payment-paid-row").hide();
+	$(".payment-items-row,.payment-subtotal-row").show();
+	$(".payment-balance-row,.payment-change-row").hide();
+	$("#payment_modal_title").text("Credit Payment Processing");
+	$(".payment-items-label").text("Items:");
+	$(".payment-entry-column").hide();
+	$(".payment-summary-column").addClass("pull-right");
+	$("#payment_mode_icon").attr("class", "fa fa-clock-o");
+
+	if($("#payment_type_1 option[value='CREDIT']").length==0){
+		$("#payment_type_1").append('<option value="CREDIT">CREDIT</option>');
+	}
+	$("#payment_type_1").val("CREDIT");
+	$("#payment_note_1").val("Credit Sale");
+
+	// Credit collects the complete net amount after discount.
+	adjust_payments();
+	$("#amount_1").val($(".sales_div_tot_payble").text()).prop("readonly", true);
+	adjust_payments();
+
+	$("#add_payment_row,#payment_type_1").parent().hide();
+	$("#amount_1").parent().parent().hide();
+	$(".payment_discount_input").parent().parent().removeClass('col-md-6').addClass('col-md-12');
+	$('#multiple-payments-modal').modal('toggle');
+}); //show_credit_modal end
+
+$(document).on("change", "select[id^='payment_type_']", function(){
+	if(String($(this).val()).toUpperCase() === "CREDIT" &&
+		$('option:selected', "#customer_id").attr('data-delete_bit')==1){
+		var fallback_value = $(this).find("option").filter(function(){
+			return String(this.value).toUpperCase() !== "CREDIT";
+		}).first().val();
+		$(this).val(typeof fallback_value === "undefined" ? "" : fallback_value);
+		toastr["warning"]("Credit sale is not allowed for Walk-in Customer. Please select another customer.");
+		failed.currentTime = 0;
+		failed.play();
+	}
+});
+
+$('#add_payment_row').on("click",function (e) {
+	
+	var base_url=$("#base_url").val();
+	//table should not be empty
+	if($(".items_table tr").length==1){
+    	toastr["error"]("Please Select Items from List!!");
+    	failed.currentTime = 0;
+		failed.play();
+		return;
+    }
+    /*if(get_id_value('customer_id')==1){
+    	//$('#customer-modal').modal('toggle');
+    	toastr["error"]("Please Select Customer!!");
+    	failed.currentTime = 0;
+failed.play();
+    	return false;
+    }*/
+    else{
+    	/*BUTTON LOAD AND DISABLE START*/
+    	var this_id=this.id;
+    	var this_val=$(this).html();
+    	$("#"+this_id).html('<i class="fa fa-spinner fa-spin"></i> Please Wait..');
+    	$("#"+this_id).attr('disabled',true);  
+    	/*BUTTON LOAD AND DISABLE END*/
+
+    	var payment_row_count=get_id_value("payment_row_count");
+    	$.post(base_url+"pos/add_payment_row",{payment_row_count:payment_row_count},function(result){
+    		$('.payments_div').parent().append(result);
+    		$("#payment_row_count").val(parseInt(payment_row_count)+1);
+
+    		/*BUTTON LOAD AND DISABLE START*/
+    		$("#"+this_id).html(this_val);
+    		$("#"+this_id).attr('disabled',false); 
+    		/*BUTTON LOAD AND DISABLE END*/    	
+    		failed.currentTime = 0;
+			failed.play();
+    		adjust_payments();
+    	});
+    }
+}); //hold_invoice end
+function remove_row(id){
+	$(".payments_div_"+id).html('');
+	failed.currentTime = 0;
+	failed.play();
+	adjust_payments();
+}
+function calculate_payments(){
+	adjust_payments();
+}
+
+function get_item_details(item_id){
+  var base_url=$("#base_url").val();
+  var warehouse_id=$("#warehouse_id").val();
+  $(".box").append('<div class="overlay"><i class="fa fa-refresh fa-spin"></i></div>');
+  $.post(base_url+"pos/get_item_details",{item_id:item_id,warehouse_id:warehouse_id},function(result){
+    console.log(result);
+    var item = jQuery.parseJSON(result);
+
+
+    var obj = {};
+    obj['item_id']        = item['id'];
+    obj['item_name']      = item['item_name'];
+    obj['stock']          = item['stock'];
+    obj['sales_price']    = item['sales_price'];
+    obj['purchase_price'] = item['purchase_price'];
+    obj['tax_id']         = item['tax_id'];
+    obj['tax_type']       = item['tax_type'];
+    obj['tax']            = item['tax'];
+    obj['tax_name']       = item['tax_name'];
+    obj['item_tax_amt']   = item['item_tax_amt'];
+    obj['discount_type']  = item['discount_type'];
+    obj['discount']       = item['discount'];
+    obj['service_bit']    = item['service_bit'];
+    obj['custom_barcode'] = item['custom_barcode'];
+    addrow(null,obj);
+    $(".overlay").remove();
+  });
+
+}
+
+/* *********************** ORDER INVOICE END****************************/
+
+
+$("#item_search").bind("paste", function(e){
+    $("#item_search").autocomplete('search');
+} );
+
+
+
+$("#item_search").autocomplete({
+	minLength: 0,
+    source: function(data, cb){
+        if(!$("#salesman_id").val()){
+            toastr["warning"]("Please Select Salesman first!!");
+            $("#salesman_id").select2("open");
+            cb([]);
+            return;
+        }
+        $.ajax({
+        	autoFocus:true,
+            url: $("#base_url").val()+'items/get_json_items_details',
+            method: 'GET',
+            dataType: 'json',
+            /*showHintOnFocus: true,
+			autoSelect: true, 
+			
+			selectInitial :true,*/
+			
+            data: {
+                name: data.term,
+                store_id:$("#store_id").val(),
+                warehouse_id:$("#warehouse_id").val(),
+                search_for:"sales",
+            },
+            beforeSend: function() {
+                if($("#warehouse_id").val()==''){
+                  toastr['warning']("Please Select Wareshouse!");
+                  $("#warehouse_id").select2('open');
+                  $("#item_search").removeClass('ui-autocomplete-loading');
+                  return;
+                }
+                $("#item_search").addClass('ui-autocomplete-loading');
+            },
+            success: function(res){
+              //console.log(res);
+                var result;
+                result = [
+                    {
+                        //label: 'No Records Found '+data.term,
+                        label: 'No Records Found ',
+                        value: ''
+                    }
+                ];
+
+                if (res.length) {
+                    result = $.map(res, function(el){
+                        return {
+                            label: el.item_code +' -- '+(el.custom_barcode || '')+' -- Qty: '+el.stock+' -- '+el.label,
+                            value: '',
+                            id: el.id,
+                            item_name: el.value,
+                            stock: el.stock,
+                            service_bit: el.service_bit,
+                           // mobile: el.mobile,
+                            //customer_dob: el.customer_dob,
+                            //address: el.address,
+                        };
+                    });
+                }
+
+                cb(result);
+            }
+        });
+    },
+     response:function(e,ui){
+          if(ui.content.length==1){
+            $(this).data('ui-autocomplete')._trigger('select', 'autocompleteselect', ui);
+            $(this).autocomplete("close");
+          }
+          //console.log(ui.content[0].id);
+        },
+        //loader start
+        search: function (e, ui) {
+        },
+        select: function (e, ui) { 
+          	
+            
+           
+            if(typeof ui.content!='undefined'){
+              console.log("Autoselected first");
+              if(isNaN(ui.content[0].id)){
+                return;
+              }
+              var stock=ui.content[0].stock;
+              var item_id=ui.content[0].id;
+              var service_bit=ui.content[0].service_bit;
+            }
+            else{
+              console.log("manual Selected");
+              var stock=ui.item.stock;
+              var item_id=ui.item.id;
+              var service_bit=ui.item.service_bit;
+            }
+            /* Zero-stock items are allowed from autocomplete, matching POS cards.
+            if(service_bit==0 && parseFloat(stock)<=0){
+              toastr["warning"](stock+" Items in Stock!!");
+              failed.currentTime = 0;
+              failed.play();
+              return false;
+            }
+            */
+
+           /* if(service_bit==1){
+              return_row_with_data(item_id);  
+            }
+            else {
+              if(restrict_quantity(item_id)){
+                return_row_with_data(item_id);  
+              }
+            }*/
+            //addrow(item_id);
+            get_item_details(item_id);
+            $("#item_search").val('');
+            
+            
+        },   
+        //loader end
+});
+
+$(document).on("click", "#new_pos_invoice", function(event){
+    var rows = $("#pos-form-tbody tr");
+    if(!rows.length){ return true; }
+    event.preventDefault();
+    var target = this.href;
+    var items = [];
+    rows.each(function(){ items.push(get_void_item(String(this.id).replace("row_", ""))); });
+    save_void_items(items, "Bulk", function(){ window.location.href = target; });
+});
+
+
+$("#customer_id").on("change",function(){
+          set_previous_due();
+});
+function set_previous_due(){
+  var selected_customer = $('option:selected', "#customer_id");
+  var is_walk_in = String(selected_customer.attr('data-delete_bit')) === '1';
+  $(".customer-previous-due-wrap").toggle(!is_walk_in);
+  $(".pos-customer-item-row").toggleClass("walkin-customer-gap", is_walk_in);
+  $(".customer_previous_due").html(selected_customer.attr('data-previous_due') || '0.00');
+  $(".customer_tot_advance").html(selected_customer.attr('data-tot_advance'));
+}
+
+
+
+function get_coupon_details(){
+  var input_box = $("#coupon_code");
+  var coupon_code = $.trim(input_box.val());
+  var customer_id = $("#customer_id").val();
+  var base_url=$("#base_url").val();
+
+  var coupon_type='';
+  var coupon_value=0;
+  if(coupon_code!=''){
+    input_box.addClass('ui-autocomplete-loading');
+    $.post(base_url+'customer_coupon/get_coupon_details', {invoice_type:'sales',coupon_code: coupon_code,customer_id:customer_id}, function(data, textStatus, xhr) {
+      var json = $.parseJSON(data);
+      coupon_value=json.coupon_value;
+      coupon_type=json.coupon_type;
+
+      
+
+      $(".coupon_value").html(to_Fixed(coupon_value));
+      $(".coupon_type").html(coupon_type);  
+
+      $(".div1,.div2").removeClass('hide');
+      
+      if(json.expire_status=='Valid'){
+        $(".msg_color").removeClass('alert-warning').addClass('alert-success');
+      }
+      else{
+       $(".msg_color").removeClass('alert-success').addClass('alert-warning');
+       $(".div2").addClass('hide');
+      }
+      $("#coupon_code_msg").text(json.message);
+
+      input_box.removeClass('ui-autocomplete-loading');
+
+      final_total();
+      adjust_payments();
+    });
+  }else{
+    $(".div1, .div2").addClass('hide');
+    $(".coupon_value").html(to_Fixed(coupon_value));
+    $(".coupon_type").html(coupon_type);  
+    final_total();
+    adjust_payments();
+  }  
+}
+
+
+$("#coupon_code, #customer_id").on("change",function() {
+  get_coupon_details();
+});
+$('#coupon_code').keypress(function (e) {
+ var key = e.which;
+ // the enter key code
+ if(key == 13){
+    get_coupon_details();  
+  }
+});  
+
+/*Calculate Coupon Discount Amount*/
+ const discount_coupon_tot = function(subtotal) {
+     var coupon_value=parseFloat($(".coupon_value").html());
+         coupon_value = isNaN(coupon_value) ? 0 : coupon_value;
+
+     var coupon_type=$(".coupon_type").html();
+
+     var discount_amt =0;
+     if(coupon_type!='' && coupon_value>0){
+
+         if(coupon_type=='Percentage'){
+             discount_amt=(subtotal*coupon_value)/100;
+         }
+         else{//Fixed
+             discount_amt=coupon_value;
+         }
+     }
+     return discount_amt;
+ }
+ 
+ $('#item_search').keypress(function (e) {
+ var key = e.which;
+ // the enter key code
+ if(key == 13){
+    $("#item_search").autocomplete('search');
+  }
+}); 
+
+
