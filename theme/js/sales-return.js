@@ -9,7 +9,7 @@ function shift_cursor(kevent,target){
 }
 
 
-$('#save,#update,#create').on("click",function (e) {
+$('#save,#update,#create,#save_and_print,#update_and_print').on("click",function (e) {
 	var base_url=$("#base_url").val();
 
     //Initially flag set true

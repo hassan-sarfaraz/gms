@@ -211,7 +211,7 @@ class Sales_return_model extends CI_Model {
 
 		$prev_item_ids = array();
 
-	    if($command=='save' || $command=='create'){//Create sales code unique if first time entry
+	    if($command=='save' || $command=='create' || $command=='save_and_print' || $command=='create_and_print'){//Create sales code unique if first time entry
 
 		    
 			$this->db->query("ALTER TABLE db_salesreturn AUTO_INCREMENT = 1");
@@ -253,7 +253,7 @@ class Sales_return_model extends CI_Model {
 
 			$return_id = $this->db->insert_id();
 		}
-		else if($command=='update'){	
+		else if($command=='update' || $command=='update_and_print'){	
 			$sales_entry = array(
 							'sales_id' 		=> $sales_id,
 		    				'reference_no' 				=> $reference_no, 
@@ -395,7 +395,7 @@ class Sales_return_model extends CI_Model {
 			 * @update
 			 * Verifieng previous and current payment total with invoice amount
 			*/
-			if($command=='update'){
+			if($command=='update' || $command=='update_and_print'){
 				$tot_payment = $this->db->select('coalesce(sum(payment),0) as payment')->where('return_id',$return_id)->get('db_salespaymentsreturn')->row()->payment;
 				if(($tot_payment+$amount)>$tot_total_amt){
 					echo "Payble amount should not be exceeds Invoice Amount!!\nPlease check previous payments as well.";exit;
@@ -932,10 +932,10 @@ class Sales_return_model extends CI_Model {
                <td id="td_<?=$rowcount;?>_3">
                   <div class="input-group ">
                      <span class="input-group-btn">
-                     <button onclick="decrement_qty(<?=$rowcount;?>)" type="button" class="btn btn-default btn-flat"><i class="fa fa-minus text-danger"></i></button></span>
+                     <button onclick="decrement_qty(<?=$rowcount;?>)" type="button" class="btn btn-danger btn-flat" style="background-color: #dd4b39; color: #fff; border-color: #d73925;"><i class="fa fa-minus"></i></button></span>
                      <input typ="text" value="<?=format_qty($item_sales_qty);?>" class="form-control no-padding text-center" onkeyup="calculate_tax(<?=$rowcount;?>)" id="td_data_<?=$rowcount;?>_3" name="td_data_<?=$rowcount;?>_3">
                      <span class="input-group-btn">
-                     <button onclick="increment_qty(<?=$rowcount;?>)" type="button" class="btn btn-default btn-flat"><i class="fa fa-plus text-success"></i></button></span>
+                     <button onclick="increment_qty(<?=$rowcount;?>)" type="button" class="btn btn-success btn-flat" style="background-color: #00a65a; color: #fff; border-color: #008d4c;"><i class="fa fa-plus"></i></button></span>
                   </div>
                </td>
                

@@ -264,7 +264,7 @@
                                                    <th rowspan='2' style="width:10%"><?= $this->lang->line('discount'); ?></th>
                                                    <th rowspan='2' style="width:10%"><?= $this->lang->line('vat_amount'); ?></th>
                                                    <th rowspan='2' style="width:5%"><?= $this->lang->line('vat_percentage'); ?></th>
-                                                   <th rowspan='2' style="width:7.5%"><?= $this->lang->line('total_amount'); ?></th>
+                                                   <th rowspan='2' style="width:7.5%">Amount</th>
                                                    <th rowspan='2' style="width:3%"><?= $this->lang->line('action'); ?></th>
                                                 </tr>
                                              </thead>
@@ -356,7 +356,7 @@
                                        </div>
                                     </div>
                                  </div>
-                                <div class="row">
+                                <div class="row" style="display:none;">
                                     <div class="col-md-12">
                                        <div class="form-group">
                                           <label for="return_note" class="col-sm-4 control-label">Comments</label>
@@ -397,7 +397,7 @@
                                                 </th>
                                              </tr>
                                              <tr>
-                                                <th class="text-right" style="font-size: 17px;"><?= $this->lang->line('discount_on_all'); ?></th>
+                                                <th class="text-right" style="font-size: 17px;">Discount</th>
                                                 <th class="text-right" style="padding-left:10%;font-size: 17px;">
                                                    <h4><b id="discount_to_all_amt" name="discount_to_all_amt">0.00</b></h4>
                                                 </th>
@@ -413,7 +413,7 @@
                                                 </th>
                                              </tr>
                                              <tr>
-                                                <th class="text-right" style="font-size: 17px;"><?= $this->lang->line('grand_total'); ?></th>
+                                                <th class="text-right" style="font-size: 17px;">Net Amount</th>
                                                 <th class="text-right" style="padding-left:10%;font-size: 17px;">
                                                    <h4><b id="total_amt" name="total_amt">0.00</b></h4>
                                                 </th>
@@ -490,7 +490,7 @@
                                          
                                                 <div class="col-md-4">
                                                   <div class="">
-                                                  <label for="amount"><?= $this->lang->line('amount'); ?></label>
+                                                  <label for="amount">Paid Amount</label>
                                                     <input type="text" class="form-control text-right paid_amt only_currency" id="amount" name="amount" placeholder="" >
                                                       <span id="amount_msg" style="display:none" class="text-danger"></span>
                                                 </div>
@@ -499,30 +499,50 @@
                                                   <div class="">
                                                     <label for="payment_type"><?= $this->lang->line('payment_type'); ?></label>
                                                     <select class="form-control select2" id='payment_type' name="payment_type">
-                                                      <?php
-                                                        $q1=$this->db->query("select * from db_paymenttypes where status=1 and store_id=".get_current_store_id());
-                                                         if($q1->num_rows()>0){
-                                                            echo "<option value=''>-Select-</option>";
-                                                             foreach($q1->result() as $res1){
-                                                             echo "<option value='".$res1->payment_type."'>".$res1->payment_type ."</option>";
+                                                       <?php
+                                                       $default_payment_type = 'CASH';
+                                                       if (isset($return_id)) {
+                                                           $q_pay = $this->db->query("select payment_type from db_salespaymentsreturn where return_id=$return_id order by id asc limit 1");
+                                                           if ($q_pay->num_rows() > 0 && !empty($q_pay->row()->payment_type)) {
+                                                               $default_payment_type = $q_pay->row()->payment_type;
                                                            }
-                                                         }
-                                                         else{
-                                                            echo "<option>None</option>";
-                                                         }
-                                                        ?>
-                                                    </select>
+                                                       }
+                                                       $q1 = $this->db->query("select * from db_paymenttypes where status=1 and store_id=" . get_current_store_id());
+                                                       if ($q1->num_rows() > 0) {
+                                                          echo "<option value=''>-Select-</option>";
+                                                          foreach ($q1->result() as $res1) {
+                                                             $selected = (strcasecmp($res1->payment_type, $default_payment_type) == 0) ? 'selected' : '';
+                                                             echo "<option value='" . $res1->payment_type . "' $selected>" . $res1->payment_type . "</option>";
+                                                          }
+                                                       } else {
+                                                          echo "<option value=''>None</option>";
+                                                       }
+                                                       ?>
+                                                     </select>
                                                     <span id="payment_type_msg" style="display:none" class="text-danger"></span>
                                                   </div>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <label for="account_id"><?= $this->lang->line('account'); ?></label>
                                                     <select class="form-control select2" id='account_id' name="account_id">
-                                                      <?php
-                                                        echo '<option value="">-None-</option>'; 
-                                                        echo get_accounts_select_list();
-                                                        ?>
-                                                    </select>
+                                                       <?php
+                                                       $default_account_id = '';
+                                                       if (isset($return_id)) {
+                                                           $q_pay_acc = $this->db->query("select account_id from db_salespaymentsreturn where return_id=$return_id order by id asc limit 1");
+                                                           if ($q_pay_acc->num_rows() > 0 && !empty($q_pay_acc->row()->account_id)) {
+                                                               $default_account_id = $q_pay_acc->row()->account_id;
+                                                           }
+                                                       }
+                                                       if (empty($default_account_id)) {
+                                                           $q_acc = $this->db->query("select id from ac_accounts where status=1 and store_id=" . get_current_store_id() . " and account_name LIKE '%Cash in Hand%' limit 1");
+                                                           if ($q_acc->num_rows() > 0) {
+                                                               $default_account_id = $q_acc->row()->id;
+                                                           }
+                                                       }
+                                                       echo '<option value="">-None-</option>';
+                                                       echo get_accounts_select_list($default_account_id);
+                                                       ?>
+                                                     </select>
                                                     <span id="account_id_msg" style="display:none" class="text-danger"></span>
                                                 </div>
                                             <div class="clearfix"></div>
@@ -586,41 +606,40 @@
                            <div class="box-footer col-sm-12">
                               <center>
                                 <?php
+                                 if($oper=='return_against_sales'){
+                                   $btn_id='save';
+                                   $btn_name="Save";
+                                   $btn_print_id='save_and_print';
+                                   $btn_print_name="Save And Print";
+                                   echo '<input type="hidden" name="sales_id" id="sales_id" value="'.$sales_id.'"/>';
+                                 }
+                                 if($oper=='edit_existing_return'){
+                                   $btn_id='update';
+                                   $btn_name="Update";
+                                   $btn_print_id='update_and_print';
+                                   $btn_print_name="Update And Print";
+                                   echo '<input type="hidden" name="return_id" id="return_id" value="'.$return_id.'"/>';
+                                   echo '<input type="hidden" name="sales_id" id="sales_id" value="'.$sales_id.'"/>';
+                                 }
+                                 if($oper=='create_new_return'){
+                                   $btn_id='save';
+                                   $btn_name="Save";
+                                   $btn_print_id='save_and_print';
+                                   $btn_print_name="Save And Print";
+                                 }
 
-                                if($oper=='return_against_sales'){
-                                  $btn_id='save';
-                                  $btn_name="Save";
-                                  echo '<input type="hidden" name="sales_id" id="sales_id" value="'.$sales_id.'"/>';
-                                }
-                                if($oper=='edit_existing_return'){
-                                  $btn_id='update';
-                                  $btn_name="Update";
-                                  echo '<input type="hidden" name="return_id" id="return_id" value="'.$return_id.'"/>';
-                                  echo '<input type="hidden" name="sales_id" id="sales_id" value="'.$sales_id.'"/>';
-                                }
-                                if($oper=='create_new_return'){
-                                  $btn_id='create';
-                                  $btn_name="Create";
-                                }
-
-                                /*if(isset($sales_id)){
-                                  $btn_id='update';
-                                  $btn_name="Update";
-                                  echo '<input type="hidden" name="sales_id" id="sales_id" value="'.$sales_id.'"/>';
-                                }
-                                else{
-                                  $btn_id='save';
-                                  $btn_name="Save";
-                                }*/
-
-                                ?>
-                                 <div class="col-md-3 col-md-offset-3">
-                                    <button type="button" id="<?php echo $btn_id;?>" class="btn btn-block btn-success payments_modal" title="Save Data"><?php echo $btn_name;?></button>
+                                 ?>
+                                 <div class="col-md-2 col-md-offset-3 col-xs-4">
+                                    <button type="button" id="<?php echo $btn_id; ?>" class="btn btn-block btn-success payments_modal" title="Save Data" style="font-size: 16px; font-weight: bold; height: 44px;"><?php echo $btn_name; ?></button>
                                  </div>
-                                 <div class="col-sm-3"><a href="<?= base_url()?>dashboard">
-                                    <button type="button" class="btn btn-block btn-warning" title="Go Dashboard">Close</button>
-                                  </a>
-                                </div>
+                                 <div class="col-md-2 col-xs-4">
+                                    <button type="button" id="<?php echo $btn_print_id; ?>" class="btn btn-block btn-info payments_modal" title="Save And Print Data" style="font-size: 16px; font-weight: bold; height: 44px;"><?php echo $btn_print_name; ?></button>
+                                 </div>
+                                 <div class="col-md-2 col-xs-4">
+                                    <a href="<?= base_url() ?>dashboard">
+                                       <button type="button" class="btn btn-block btn-warning" title="Go Dashboard" style="font-size: 16px; font-weight: bold; height: 44px;">Close</button>
+                                    </a>
+                                 </div>
                               </center>
                            </div>
                            
